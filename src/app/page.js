@@ -203,9 +203,13 @@ export default function ContactForm() {
         </div>
 
         {/* Footer Note */}
+         <p className="text-center text-sm text-gray-800 mt-6">
+          By <span className='font-bold'>DANISH</span>
+        </p>
         <p className="text-center text-sm text-gray-500 mt-6">
           Your information is secure and will never be shared with third parties.
         </p>
+        <p className="text-center text-sm text-gray-500 mt-6">© 2024 Your Company. All rights reserved.</p>
       </div>
     </div>
   );
