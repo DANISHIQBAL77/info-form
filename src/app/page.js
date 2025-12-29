@@ -67,9 +67,27 @@ export default function ContactForm() {
     }
 
     setStatus('loading');
+    
+    // Detailed logging for debugging
+    console.log('=== FORM SUBMISSION STARTED ===');
+    console.log('Environment check:', {
+      hasApiKey: !!firebaseConfig.apiKey,
+      hasAuthDomain: !!firebaseConfig.authDomain,
+      hasProjectId: !!firebaseConfig.projectId,
+      projectId: firebaseConfig.projectId,
+      apiKeyLength: firebaseConfig.apiKey?.length || 0
+    });
+    console.log('Form data:', {
+      name: formData.name,
+      email: formData.email,
+      hasPhone: !!formData.phone,
+      messageLength: formData.message.length
+    });
 
     try {
-      await addDoc(collection(db, 'form-submissions'), {
+      console.log('Attempting to write to Firestore collection: form-submissions');
+      
+      const docRef = await addDoc(collection(db, 'form-submissions'), {
         name: formData.name.trim(),
         email: formData.email.trim(),
         phone: formData.phone.trim(),
@@ -78,14 +96,21 @@ export default function ContactForm() {
         createdAt: new Date()
       });
 
+      console.log('✅ SUCCESS! Document written with ID:', docRef.id);
+      
       setStatus('success');
       setFormData({ name: '', email: '', phone: '', message: '' });
       
       setTimeout(() => setStatus('idle'), 3000);
     } catch (error) {
+      console.error('=== FIREBASE ERROR ===');
+      console.error('Full error object:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      console.error('Error name:', error.name);
+      
       setStatus('error');
-      setErrorMsg('Failed to send message. Please try again.');
-      console.error('Firebase error:', error);
+      setErrorMsg(`Failed to send: ${error.code || error.message}`);
     }
   };
 
@@ -203,7 +228,7 @@ export default function ContactForm() {
         </div>
 
         {/* Footer Note */}
-         <p className="text-center text-sm text-gray-800 mt-6">
+        <p className="text-center text-sm text-gray-800 mt-6">
           By <span className='font-bold'>DANISH</span>
         </p>
         <p className="text-center text-sm text-gray-500 mt-6">
