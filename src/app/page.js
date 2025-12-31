@@ -1,15 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { Send } from 'lucide-react';
-import Input from '@/components/Ui/Input';
-import Textarea from '@/components/Ui/Textarea';
-import Button from '@/components/Ui/Button';
-import Alert from '@/components/Ui/Alert';
+import { useRouter } from 'next/navigation';
+import { Send, ShieldCheck } from 'lucide-react';
+import Input from '@/components/ui/Input';
+import Textarea from '@/components/ui/Textarea';
+import Button from '@/components/ui/Button';
+import Alert from '@/components/ui/Alert';
 import { validateContactForm } from '@/lib/utils';
-import { submitContactForm } from '@/lib/Firebaseservice';
+import { submitContactForm } from '@/lib/firebaseservice';
 
 export default function ContactForm() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -67,7 +69,17 @@ export default function ContactForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4 relative">
+      {/* Admin Access Button - Top Right */}
+      <button
+        onClick={() => router.push('/admin/login')}
+        className="fixed top-6 right-6 z-50 flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-slate-800 to-slate-900 hover:from-purple-600 hover:to-blue-600 text-white rounded-full transition-all duration-300 shadow-lg hover:shadow-2xl group transform hover:scale-105"
+        title="Admin Access"
+      >
+        <ShieldCheck className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
+        <span className="font-semibold text-black text-sm">Admin</span>
+      </button>
+
       <div className="w-full max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">
