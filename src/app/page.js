@@ -1,23 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore, collection, addDoc } from 'firebase/firestore';
-import { Send, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
-
-// Firebase configuration
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
-};
-
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db = getFirestore(app);
+import { Send } from 'lucide-react';
+import Input from '@/components/Ui/Input';
+import Textarea from '@/components/Ui/Textarea';
+import Button from '@/components/Ui/Button';
+import Alert from '@/components/Ui/Alert';
+import { validateContactForm } from '@/lib/utils';
+import { submitContactForm } from '@/lib/Firebaseservice';
 
 export default function ContactForm() {
   const [formData, setFormData] = useState({
@@ -28,7 +18,8 @@ export default function ContactForm() {
   });
   
   const [status, setStatus] = useState('idle');
-  const [errorMsg, setErrorMsg] = useState('');
+  const [errors, setErrors] = useState({});
+  const [alertMessage, setAlertMessage] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -36,81 +27,42 @@ export default function ContactForm() {
       ...prev,
       [name]: value
     }));
-  };
-
-  const validateForm = () => {
-    if (!formData.name.trim()) {
-      setErrorMsg('Please enter your name');
-      return false;
+    // Clear error for this field when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
     }
-    if (!formData.email.trim()) {
-      setErrorMsg('Please enter your email');
-      return false;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      setErrorMsg('Please enter a valid email address');
-      return false;
-    }
-    if (!formData.message.trim()) {
-      setErrorMsg('Please enter a message');
-      return false;
-    }
-    return true;
   };
 
   const handleSubmit = async () => {
-    setErrorMsg('');
+    setErrors({});
+    setAlertMessage('');
     
-    if (!validateForm()) {
+    // Validate form
+    const validation = validateContactForm(formData);
+    if (!validation.isValid) {
+      setErrors(validation.errors);
       setStatus('error');
+      setAlertMessage(Object.values(validation.errors)[0]);
       return;
     }
 
     setStatus('loading');
-    
-    // Detailed logging for debugging
-    console.log('=== FORM SUBMISSION STARTED ===');
-    console.log('Environment check:', {
-      hasApiKey: !!firebaseConfig.apiKey,
-      hasAuthDomain: !!firebaseConfig.authDomain,
-      hasProjectId: !!firebaseConfig.projectId,
-      projectId: firebaseConfig.projectId,
-      apiKeyLength: firebaseConfig.apiKey?.length || 0
-    });
-    console.log('Form data:', {
-      name: formData.name,
-      email: formData.email,
-      hasPhone: !!formData.phone,
-      messageLength: formData.message.length
-    });
 
-    try {
-      console.log('Attempting to write to Firestore collection: form-submissions');
-      
-      const docRef = await addDoc(collection(db, 'form-submissions'), {
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        phone: formData.phone.trim(),
-        message: formData.message.trim(),
-        timestamp: new Date().toISOString(),
-        createdAt: new Date()
-      });
+    // Submit to Firebase
+    const result = await submitContactForm(formData);
 
-      console.log('✅ SUCCESS! Document written with ID:', docRef.id);
-      
+    if (result.success) {
       setStatus('success');
+      setAlertMessage('Message sent successfully!');
       setFormData({ name: '', email: '', phone: '', message: '' });
       
-      setTimeout(() => setStatus('idle'), 3000);
-    } catch (error) {
-      console.error('=== FIREBASE ERROR ===');
-      console.error('Full error object:', error);
-      console.error('Error code:', error.code);
-      console.error('Error message:', error.message);
-      console.error('Error name:', error.name);
-      
+      setTimeout(() => {
+        setStatus('idle');
+        setAlertMessage('');
+      }, 3000);
+    } else {
       setStatus('error');
-      setErrorMsg(`Failed to send: ${error.code || error.message}`);
+      setAlertMessage(result.error || 'Failed to send message. Please try again.');
     }
   };
 
@@ -127,114 +79,81 @@ export default function ContactForm() {
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
           <div className="space-y-6">
             {/* Name Field */}
-            <div>
-              <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
-                Full Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full px-4 py-3 text-black bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 outline-none"
-                placeholder="John Doe"
-              />
-            </div>
+            <Input
+              label="Full Name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="John Doe"
+              required
+              error={errors.name}
+            />
 
             {/* Email Field */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
-                Email Address <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full px-4 text-black py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 outline-none"
-                placeholder="john@example.com"
-              />
-            </div>
+            <Input
+              label="Email Address"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="john@example.com"
+              required
+              error={errors.email}
+            />
 
             {/* Phone Field */}
-            <div>
-              <label htmlFor="phone" className="block text-sm font-semibold text-gray-700 mb-2">
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                id="phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                className="w-full px-4 text-black py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 outline-none"
-                placeholder="+1 (555) 123-4567"
-              />
-            </div>
+            <Input
+              label="Phone Number"
+              name="phone"
+              type="tel"
+              value={formData.phone}
+              onChange={handleChange}
+              placeholder="+1 (555) 123-4567"
+              error={errors.phone}
+            />
 
             {/* Message Field */}
-            <div>
-              <label htmlFor="message" className="block text-sm font-semibold text-gray-700 mb-2">
-                Message <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                id="message"
-                name="message"
-                value={formData.message}
-                onChange={handleChange}
-                rows="4"
-                className="w-full px-4 text-black py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 outline-none resize-none"
-                placeholder="Tell us what you're thinking..."
-              />
-            </div>
+            <Textarea
+              label="Message"
+              name="message"
+              value={formData.message}
+              onChange={handleChange}
+              placeholder="Tell us what you're thinking..."
+              required
+              error={errors.message}
+            />
 
-            {/* Success Message */}
+            {/* Alert Messages */}
             {status === 'success' && (
-              <div className="flex items-center gap-2 p-4 bg-green-50 border border-green-200 rounded-lg text-green-800">
-                <CheckCircle className="w-5 h-5 flex-shrink-0" />
-                <span className="font-medium">Message sent successfully!</span>
-              </div>
+              <Alert type="success" message={alertMessage} />
             )}
 
-            {/* Error Message */}
-            {status === 'error' && (
-              <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
-                <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                <span className="font-medium">{errorMsg}</span>
-              </div>
+            {status === 'error' && alertMessage && (
+              <Alert type="error" message={alertMessage} />
             )}
 
             {/* Submit Button */}
-            <button
+            <Button
               onClick={handleSubmit}
-              disabled={status === 'loading'}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+              loading={status === 'loading'}
+              icon={!status === 'loading' && <Send className="w-5 h-5" />}
+              className="w-full"
             >
-              {status === 'loading' ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Sending...
-                </>
-              ) : (
-                <>
-                  <Send className="w-5 h-5" />
-                  Send Message
-                </>
-              )}
-            </button>
+              Send Message
+            </Button>
           </div>
         </div>
 
-        {/* Footer Note */}
+        {/* Footer */}
         <p className="text-center text-sm text-gray-800 mt-6">
           By <span className='font-bold'>DANISH</span>
         </p>
         <p className="text-center text-sm text-gray-500 mt-6">
           Your information is secure and will never be shared with third parties.
         </p>
-        <p className="text-center text-sm text-gray-500 mt-6">© 2024 Your Company. All rights reserved.</p>
+        <p className="text-center text-sm text-gray-500 mt-6">
+          © 2024 Your Company. All rights reserved.
+        </p>
       </div>
     </div>
   );
