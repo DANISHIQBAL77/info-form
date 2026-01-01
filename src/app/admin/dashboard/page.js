@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { LogOut, Mail, Phone, MessageSquare, Clock, User, RefreshCw, Trash2 } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 import { logout, onAuthChange } from '@/lib/authService';
 import { getAllSubmissions, deleteSubmission } from '@/lib/Firebaseservice';
 import { formatDate } from '@/lib/utils';
