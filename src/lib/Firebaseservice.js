@@ -1,4 +1,4 @@
-import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, orderBy, limit, deleteDoc, doc } from 'firebase/firestore';
 import { db } from './firebase';
 
 // Submit form data
@@ -56,6 +56,23 @@ export const getAllSubmissions = async (limitCount = 50) => {
     return {
       success: false,
       error: error.message
+    };
+  }
+};
+
+// Delete a submission
+export const deleteSubmission = async (submissionId) => {
+  try {
+    await deleteDoc(doc(db, 'form-submissions', submissionId));
+    return {
+      success: true,
+      message: 'Submission deleted successfully'
+    };
+  } catch (error) {
+    console.error('Error deleting submission:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to delete submission'
     };
   }
 };

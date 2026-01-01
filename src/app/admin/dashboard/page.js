@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, Mail, Phone, MessageSquare, Clock, User, RefreshCw } from 'lucide-react';
+import { LogOut, Mail, Phone, MessageSquare, Clock, User, RefreshCw, Trash2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { logout, onAuthChange } from '@/lib/authService';
-import { getAllSubmissions } from '@/lib/firebaseservice';
+import { getAllSubmissions, deleteSubmission } from '@/lib/Firebaseservice';
 import { formatDate } from '@/lib/utils';
 
 export default function AdminDashboard() {
@@ -13,6 +13,7 @@ export default function AdminDashboard() {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     // Check authentication
@@ -40,6 +41,23 @@ export default function AdminDashboard() {
   const handleLogout = async () => {
     await logout();
     router.push('/admin/login');
+  };
+
+  const handleDelete = async (submissionId) => {
+    if (!confirm('Are you sure you want to delete this submission?')) {
+      return;
+    }
+
+    setDeletingId(submissionId);
+    const result = await deleteSubmission(submissionId);
+    
+    if (result.success) {
+      setSubmissions(prev => prev.filter(s => s.id !== submissionId));
+    } else {
+      alert('Failed to delete submission: ' + result.error);
+    }
+    
+    setDeletingId(null);
   };
 
   if (loading) {
@@ -161,6 +179,9 @@ export default function AdminDashboard() {
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Date
                     </th>
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -202,6 +223,20 @@ export default function AdminDashboard() {
                           <Clock className="w-4 h-4" />
                           {submission.createdAt ? formatDate(submission.createdAt.toDate()) : 'N/A'}
                         </div>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={() => handleDelete(submission.id)}
+                          disabled={deletingId === submission.id}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 hover:text-white hover:bg-red-600 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Delete submission"
+                        >
+                          {deletingId === submission.id ? (
+                            <RefreshCw className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                        </button>
                       </td>
                     </tr>
                   ))}

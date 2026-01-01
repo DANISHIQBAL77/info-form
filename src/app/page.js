@@ -8,7 +8,7 @@ import Textarea from '@/components/ui/Textarea';
 import Button from '@/components/ui/Button';
 import Alert from '@/components/ui/Alert';
 import { validateContactForm } from '@/lib/utils';
-import { submitContactForm } from '@/lib/firebaseservice';
+import { submitContactForm } from '@/lib/Firebaseservice';
 
 export default function ContactForm() {
   const router = useRouter();
