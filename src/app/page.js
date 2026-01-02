@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Send, ShieldCheck } from 'lucide-react';
 import Input from '@/components/ui/input';
-import Textarea from '@/components/ui/textarea';
+import Textarea from '@/components/ui/Textarea';
 import Button from '@/components/ui/button';
 import Alert from '@/components/ui/alert';
 import { validateContactForm } from '@/lib/utils';
