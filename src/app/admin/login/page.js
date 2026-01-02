@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LogIn } from 'lucide-react';
-import Input from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
-import Alert from '@/components/ui/Alert';
+import Input from '@/components/Ui/Input';
+import Button from '@/components/Ui/Button';
+import Alert from '@/components/Ui/Alert';
 import { loginWithEmail } from '@/lib/authService';
 
 export default function AdminLogin() {

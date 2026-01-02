@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Send, ShieldCheck } from 'lucide-react';
-import Input from '@/components/ui/Input';
-import Textarea from '@/components/ui/Textarea';
-import Button from '@/components/ui/Button';
-import Alert from '@/components/ui/Alert';
+import Input from '@/components/Ui/Input';
+import Textarea from '@/components/Ui/Textarea';
+import Button from '@/components/Ui/Button';
+import Alert from '@/components/Ui/Alert';
 import { validateContactForm } from '@/lib/utils';
 import { submitContactForm } from '@/lib/Firebaseservice';
 
